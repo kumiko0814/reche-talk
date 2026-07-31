@@ -84,16 +84,29 @@ CREATE TABLE IF NOT EXISTS rtalk_bug_reports (
 );
 
 -- 画像・動画の保存先バケット
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('rtalk-media', 'rtalk-media', true)
-ON CONFLICT (id) DO NOTHING;
+-- ※環境によっては storage への変更が権限エラーになるため、
+--   エラーが出ても他のテーブル作成が巻き戻らないように保護しています。
+--   （失敗しても画像はアプリ側の簡易保存で送れます）
+DO $$
+BEGIN
+  INSERT INTO storage.buckets (id, name, public)
+  VALUES ('rtalk-media', 'rtalk-media', true)
+  ON CONFLICT (id) DO NOTHING;
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'storage bucket はスキップしました: %', SQLERRM;
+END $$;
 
-DROP POLICY IF EXISTS "rtalk_media_anon_select" ON storage.objects;
-DROP POLICY IF EXISTS "rtalk_media_anon_insert" ON storage.objects;
-CREATE POLICY "rtalk_media_anon_select" ON storage.objects
-  FOR SELECT USING (bucket_id = 'rtalk-media');
-CREATE POLICY "rtalk_media_anon_insert" ON storage.objects
-  FOR INSERT WITH CHECK (bucket_id = 'rtalk-media');
+DO $$
+BEGIN
+  DROP POLICY IF EXISTS "rtalk_media_anon_select" ON storage.objects;
+  DROP POLICY IF EXISTS "rtalk_media_anon_insert" ON storage.objects;
+  CREATE POLICY "rtalk_media_anon_select" ON storage.objects
+    FOR SELECT USING (bucket_id = 'rtalk-media');
+  CREATE POLICY "rtalk_media_anon_insert" ON storage.objects
+    FOR INSERT WITH CHECK (bucket_id = 'rtalk-media');
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'storage policy はスキップしました: %', SQLERRM;
+END $$;
 
 -- リアルタイム同期（全員の画面に即反映）
 ALTER TABLE rtalk_users       REPLICA IDENTITY FULL;
@@ -106,9 +119,13 @@ DO $$
 DECLARE t TEXT;
 BEGIN
   FOREACH t IN ARRAY ARRAY['rtalk_users','rtalk_rooms','rtalk_messages','rtalk_reads','rtalk_broadcasts','rtalk_bug_reports'] LOOP
-    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname='supabase_realtime' AND tablename=t) THEN
-      EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE %I', t);
-    END IF;
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname='supabase_realtime' AND tablename=t) THEN
+        EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE %I', t);
+      END IF;
+    EXCEPTION WHEN OTHERS THEN
+      RAISE NOTICE 'realtime設定はスキップしました(%): %', t, SQLERRM;
+    END;
   END LOOP;
 END $$;
 

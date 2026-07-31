@@ -244,8 +244,10 @@
     <div class="setup-card">
       <div style="font-size:26px;text-align:center;margin-bottom:8px">🔧</div>
       <b>データベースの準備がまだ完了していません。</b><br><br>
-      Supabase の SQL Editor で <b>schema.sql</b>（リポジトリに同梱）を1回 RUN してから、このページを再読み込みしてください。<br><br>
-      <button class="btn-reload" style="width:100%" onclick="location.reload()">再読み込みする</button>
+      最初に1回だけ、Supabase に SQL を貼って RUN する作業が必要です。手順ページにコピー用ボタンがあります（3分で終わります）。<br>
+      途中でエラーが出た場合も、同じ SQL をもう一度 RUN すれば大丈夫です。<br><br>
+      <a class="btn-reload" style="display:block;text-align:center;text-decoration:none;margin-bottom:10px" href="setup.html">📋 セットアップ手順を開く</a>
+      <button class="btn-reload" style="width:100%;background:#5C9EC9" onclick="location.reload()">RUN したら押す（再読み込み）</button>
     </div>
   </div>
 
@@ -738,7 +740,20 @@ async function sendMedia(input){
     else { blob = await shrinkImage(file); }
     var path = curRoom.id + '/' + uuid() + '.' + ext;
     var up = await sb.storage.from('rtalk-media').upload(path, blob, { contentType: ctype });
-    if (up.error) throw up.error;
+    if (up.error) {
+      // storage未設定の環境向けフォールバック：画像はデータURLで本文に埋め込む
+      logErr('storage失敗→フォールバック: ' + up.error.message);
+      if (isVideo) { toast('動画の保存先が未設定のため、デモ版では画像でお試しください'); return; }
+      var small = await shrinkImage(file, 900, 0.75);
+      var dataUrl = await blobToDataUrl(small);
+      if (dataUrl.length > 900000) {
+        small = await shrinkImage(file, 600, 0.6);
+        dataUrl = await blobToDataUrl(small);
+      }
+      if (dataUrl.length > 900000) { toast('画像が大きすぎました。。別の画像でお試しください'); return; }
+      await insertMessage('image', dataUrl);
+      return;
+    }
     var pub = sb.storage.from('rtalk-media').getPublicUrl(path);
     var url = pub && pub.data ? pub.data.publicUrl : '';
     if (!url) throw new Error('URL取得失敗');
@@ -748,22 +763,30 @@ async function sendMedia(input){
     toast('画像・動画の送信に失敗しました。。');
   }
 }
-function shrinkImage(file){
+function shrinkImage(file, maxSize, quality){
   return new Promise(function(resolve, reject){
     var img = new Image();
     var fr = new FileReader();
     fr.onload = function(){ img.src = fr.result; };
     fr.onerror = reject;
     img.onload = function(){
-      var MAX = 1280;
+      var MAX = maxSize || 1280;
       var w = img.width, h = img.height;
       if (w > MAX || h > MAX) { var k = Math.min(MAX / w, MAX / h); w = Math.round(w * k); h = Math.round(h * k); }
       var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
       cv.getContext('2d').drawImage(img, 0, 0, w, h);
-      cv.toBlob(function(b){ b ? resolve(b) : reject(new Error('画像変換失敗')); }, 'image/jpeg', 0.85);
+      cv.toBlob(function(b){ b ? resolve(b) : reject(new Error('画像変換失敗')); }, 'image/jpeg', quality || 0.85);
     };
     img.onerror = reject;
     fr.readAsDataURL(file);
+  });
+}
+function blobToDataUrl(blob){
+  return new Promise(function(resolve, reject){
+    var fr = new FileReader();
+    fr.onload = function(){ resolve(fr.result); };
+    fr.onerror = reject;
+    fr.readAsDataURL(blob);
   });
 }
 function viewImg(src){
@@ -934,7 +957,8 @@ async function runDiag(){
     await sb.from('rtalk_reads').delete().eq('room_id', 'diag').eq('user_id', probe.user_id);
     // ストレージ
     var st = await sb.storage.from('rtalk-media').list('', { limit: 1 });
-    add(!st.error, '画像・動画の保存先（storage）', st.error ? st.error.message : 'OK');
+    add(!st.error, '画像・動画の保存先（storage）',
+      st.error ? '未設定です（画像は簡易保存で送れます。動画のみ不可）' : 'OK');
   } catch(e) {
     add(false, '診断中にエラー', e.message || String(e));
   }
