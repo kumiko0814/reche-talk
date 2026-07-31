@@ -19,6 +19,7 @@
     font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;
     background:var(--bg); color:var(--navy);
     -webkit-text-size-adjust:100%;
+    overflow-x:hidden;
   }
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
   input,textarea{font-family:inherit;font-size:16px}
@@ -51,7 +52,7 @@
 
   /* ---------- 入口 ---------- */
   #view-entry{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;background:linear-gradient(160deg,#EAF4FA,#F7E3EB)}
-  .entry-card{max-width:420px;margin:0 auto;padding:36px 22px 60px}
+  .entry-card{max-width:420px;width:100%;margin:0 auto;padding:36px 22px 60px}
   .entry-logo{text-align:center;margin-bottom:6px;font-size:44px}
   .entry-title{text-align:center;font-size:26px;font-weight:800;letter-spacing:0.02em}
   .entry-badge{display:block;width:fit-content;margin:10px auto 24px;background:var(--pink);color:#fff;
@@ -921,8 +922,8 @@ async function runDiag(){
   try {
     var tables = ['rtalk_users','rtalk_rooms','rtalk_messages','rtalk_reads','rtalk_broadcasts','rtalk_bug_reports'];
     for (var i = 0; i < tables.length; i++) {
-      var r = await sb.from(tables[i]).select('*', { head: true, count: 'exact' }).limit(1);
-      add(!r.error, 'テーブル ' + tables[i], r.error ? r.error.message : (r.count == null ? 'OK' : r.count + '行'));
+      var r = await sb.from(tables[i]).select('*').limit(1);
+      add(!r.error, 'テーブル ' + tables[i], r.error ? r.error.message : 'OK');
     }
     // 書込→読込ラウンドトリップ
     var probe = { room_id: 'diag', user_id: 'diag-' + (me ? me.id : 'anon'), user_role: 'diag', last_read_at: new Date().toISOString() };
@@ -1014,8 +1015,8 @@ setTimeout(function(){
         else { me = null; show('view-entry'); toast('前回の続きを読み込めなかったので、最初の画面に戻りました'); }
       }
     } else {
-      // テーブル存在チェック（未セットアップなら案内画面）
-      var probe = await sb.from('rtalk_users').select('id', { head: true, count: 'exact' }).limit(1);
+      // テーブル存在チェック（未セットアップなら案内画面）※HEADだとエラー本文が取れないのでGET
+      var probe = await sb.from('rtalk_users').select('id').limit(1);
       if (probe.error && isMissingTable(probe.error)) show('view-setup');
       else show('view-entry');
     }
