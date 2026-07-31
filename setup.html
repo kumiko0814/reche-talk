@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Re:che トーク 初期セットアップ</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN',sans-serif;
+    background:#EAF4FA;color:#1D3557;padding:28px 16px;line-height:1.9}
+  .card{max-width:640px;margin:0 auto;background:#fff;border-radius:16px;padding:26px 22px;box-shadow:0 4px 18px rgba(29,53,87,0.08)}
+  h1{font-size:20px;margin-bottom:14px}
+  ol{padding-left:22px;font-size:14.5px}
+  li{margin-bottom:8px}
+  .btn{display:inline-block;background:#1D3557;color:#fff;font-weight:700;border:none;border-radius:12px;
+    padding:13px 24px;font-size:15px;cursor:pointer;margin:14px 0}
+  pre{background:#F4F7FA;border-radius:12px;padding:14px;font-size:11px;overflow-x:auto;max-height:300px;
+    -webkit-overflow-scrolling:touch;white-space:pre-wrap;word-break:break-all}
+  .ok{color:#5FA88C;font-weight:700}
+  a{color:#5C9EC9}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🔧 Re:che トーク 初期セットアップ（1回だけ）</h1>
+  <ol>
+    <li>Supabase ダッシュボードを開く → 左メニューの <b>SQL Editor</b></li>
+    <li>下の「SQLをコピー」ボタンを押す</li>
+    <li>SQL Editor に貼り付けて <b>RUN</b></li>
+    <li><span class="ok">「Success. No rows returned」</span>と出たら完了</li>
+    <li><a href="./index.html">アプリを開く</a> → 画面右下の「🩺 動作チェック」で全部✅になればOK</li>
+  </ol>
+  <button class="btn" id="copy-btn" onclick="copySql()">📋 SQLをコピー</button>
+  <pre id="sql-box">読み込み中です。。</pre>
+</div>
+<script>
+'use strict';
+var sqlText = '';
+fetch('schema.sql').then(function(r){ return r.text(); }).then(function(t){
+  sqlText = t;
+  document.getElementById('sql-box').textContent = t;
+}).catch(function(){
+  document.getElementById('sql-box').textContent = '読み込みに失敗しました。schema.sql を直接開いてコピーしてください。';
+});
+function copySql(){
+  if (!sqlText) return;
+  navigator.clipboard.writeText(sqlText).then(function(){
+    document.getElementById('copy-btn').textContent = '✅ コピーしました';
+  }).catch(function(){
+    var ta = document.createElement('textarea');
+    ta.value = sqlText; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    document.getElementById('copy-btn').textContent = '✅ コピーしました';
+  });
+}
+</script>
+</body>
+</html>
