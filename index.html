@@ -49,36 +49,68 @@
   .avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
     font-size:21px;flex-shrink:0;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.12)}
   .avatar.sm{width:30px;height:30px;font-size:16px;border-width:1.5px}
+  .avatar{overflow:hidden}
+  .mini-icon{width:15px;height:15px;border-radius:50%;object-fit:cover;vertical-align:-3px}
 
   /* ---------- 入口 ---------- */
-  #view-entry{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;background:linear-gradient(160deg,#EAF4FA,#F7E3EB)}
-  .entry-card{max-width:420px;width:100%;margin:0 auto;padding:36px 22px 60px}
-  .entry-logo{text-align:center;margin-bottom:6px;font-size:44px}
-  .entry-title{text-align:center;font-size:26px;font-weight:800;letter-spacing:0.02em}
-  .entry-badge{display:block;width:fit-content;margin:10px auto 24px;background:var(--pink);color:#fff;
-    font-size:12px;font-weight:700;padding:4px 14px;border-radius:99px}
-  .entry-note{background:rgba(255,255,255,0.85);border-radius:14px;padding:14px 16px;font-size:13px;line-height:1.7;
-    color:var(--navy2);margin-bottom:22px}
-  .field-label{font-size:13px;font-weight:700;margin:18px 0 8px;color:var(--navy2)}
-  .role-row{display:flex;gap:10px}
-  .role-card{flex:1;background:#fff;border:2.5px solid transparent;border-radius:16px;padding:16px 8px;text-align:center;
-    font-size:14px;font-weight:700;color:var(--navy);box-shadow:0 2px 8px rgba(29,53,87,0.06)}
-  .role-card .big{font-size:30px;display:block;margin-bottom:6px}
-  .role-card.sel{border-color:var(--blue-deep);background:var(--blue-soft)}
-  .text-input{width:100%;border:2px solid #D5E2EC;border-radius:12px;padding:13px 14px;background:#fff;outline:none}
-  .text-input:focus{border-color:var(--blue-deep)}
-  .icon-grid{display:flex;flex-wrap:wrap;gap:8px}
-  .icon-pick{width:46px;height:46px;border-radius:50%;background:#fff;font-size:24px;display:flex;align-items:center;
-    justify-content:center;border:2.5px solid transparent;box-shadow:0 1px 4px rgba(29,53,87,0.08)}
-  .icon-pick.sel{border-color:var(--blue-deep);background:var(--blue-soft)}
-  .color-row{display:flex;gap:10px}
-  .color-pick{width:36px;height:36px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 4px rgba(29,53,87,0.15)}
-  .color-pick.sel{outline:3px solid var(--navy)}
-  .cta{display:block;width:100%;margin-top:28px;background:var(--navy);color:#fff;font-size:18px;font-weight:800;
-    border-radius:16px;padding:17px;box-shadow:0 4px 14px rgba(29,53,87,0.25)}
+  #view-entry{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;position:relative;
+    background:linear-gradient(170deg,#DFE4F7 0%,#E9E2F4 34%,#F6E2EC 68%,#F9E6EE 100%)}
+  #view-entry::before,#view-entry::after{content:'';position:absolute;border-radius:50%;filter:blur(46px);
+    pointer-events:none;opacity:0.55}
+  #view-entry::before{width:270px;height:270px;background:#C9D4F5;top:-70px;right:-90px}
+  #view-entry::after{width:300px;height:300px;background:#F6CFE0;bottom:-90px;left:-110px}
+  .entry-card{max-width:430px;width:100%;margin:0 auto;padding:40px 22px 56px;position:relative;z-index:1}
+  .logo-bubble{width:74px;height:60px;background:#fff;border-radius:34px;margin:0 auto 4px;position:relative;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(105,110,180,0.22);
+    color:#7C86C8;font-size:26px;font-weight:800;letter-spacing:1px}
+  .logo-bubble::after{content:'';position:absolute;bottom:-7px;left:20px;width:16px;height:16px;background:#fff;
+    border-radius:3px;transform:rotate(52deg)}
+  .entry-title{text-align:center;font-size:34px;font-weight:700;letter-spacing:0.04em;color:#25355E;margin-top:12px;
+    font-family:'Hiragino Mincho ProN','Yu Mincho',Georgia,'Times New Roman',serif}
+  .entry-badge{display:block;width:fit-content;margin:12px auto 26px;background:var(--pink);color:#fff;
+    font-size:12.5px;font-weight:700;padding:5px 20px;border-radius:99px;box-shadow:0 3px 10px rgba(217,139,166,0.4)}
+  .entry-note{background:rgba(255,255,255,0.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    border-radius:18px;padding:17px 19px;font-size:13.5px;line-height:1.9;
+    color:var(--navy2);margin-bottom:26px;box-shadow:0 4px 16px rgba(105,110,180,0.10)}
+  .field-label{font-size:14px;font-weight:700;margin:22px 0 10px;color:#33436B}
+  .role-row{display:flex;gap:12px}
+  .role-card{flex:1;min-width:0;background:#fff;border:2px solid transparent;border-radius:20px;padding:20px 8px 16px;
+    text-align:center;font-size:15px;font-weight:700;color:var(--navy);position:relative;overflow:hidden;
+    box-shadow:0 6px 18px rgba(105,110,180,0.13);transition:transform 0.12s}
+  .role-card::after{content:'';position:absolute;left:0;right:0;bottom:0;height:5px}
+  .role-card.role-blue::after{background:linear-gradient(90deg,#8FB6E8,#B9D3F2)}
+  .role-card.role-pink::after{background:linear-gradient(90deg,#F0B7CD,#F6D3E0)}
+  .role-card .role-ico{width:58px;height:58px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;
+    justify-content:center;font-size:28px}
+  .role-card.role-blue .role-ico{background:#E3EDFA}
+  .role-card.role-pink .role-ico{background:#FBE7F0}
+  .role-card .role-sub{display:block;font-size:11.5px;font-weight:500;color:var(--gray);margin-top:5px}
+  .role-card.sel{border-color:#8FA5DE;transform:translateY(-2px);box-shadow:0 8px 22px rgba(105,110,180,0.24)}
+  .input-wrap{position:relative}
+  .input-wrap .input-ico{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:34px;height:34px;
+    border-radius:50%;background:#E6E4F6;display:flex;align-items:center;justify-content:center;font-size:16px;color:#7C86C8}
+  .text-input{width:100%;border:2px solid rgba(255,255,255,0.9);border-radius:99px;padding:15px 18px 15px 52px;
+    background:rgba(255,255,255,0.86);outline:none;box-shadow:0 4px 14px rgba(105,110,180,0.10);color:var(--navy)}
+  .text-input:focus{border-color:#8FA5DE}
+  .icon-grid{display:flex;flex-wrap:wrap;gap:11px}
+  .icon-pick{width:54px;height:54px;border-radius:50%;background:#fff;font-size:27px;display:flex;align-items:center;
+    justify-content:center;border:2.5px solid transparent;box-shadow:0 4px 12px rgba(105,110,180,0.14);overflow:hidden;
+    padding:0}
+  .icon-pick img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  .icon-pick.sel{border-color:#6F87D8;background:#EEF2FC}
+  .icon-pick.photo-tile{font-size:20px;flex-direction:column;gap:0}
+  .icon-pick.photo-tile small{font-size:8.5px;font-weight:700;color:var(--gray);line-height:1}
+  .color-row{display:flex;gap:12px}
+  .color-pick{width:38px;height:38px;border-radius:50%;border:3px solid #fff;box-shadow:0 3px 10px rgba(105,110,180,0.18)}
+  .color-pick.sel{outline:3px solid #55639A}
+  .cta{display:block;width:100%;margin-top:30px;color:#fff;font-size:18px;font-weight:800;letter-spacing:0.2em;
+    background:linear-gradient(90deg,#7FA3DE 0%,#A98FD8 50%,#E58FB4 100%);
+    border-radius:99px;padding:18px;box-shadow:0 8px 22px rgba(150,120,190,0.35)}
   .cta:disabled{opacity:0.4}
-  .entry-foot{margin-top:26px;text-align:center;font-size:12px;color:var(--navy2);display:flex;justify-content:center;gap:18px}
-  .entry-foot button{text-decoration:underline;color:var(--navy2);font-size:12px}
+  .entry-foot{margin-top:28px;text-align:center;font-size:13px;color:var(--navy2);display:flex;justify-content:center;
+    align-items:center;gap:14px}
+  .entry-foot button{text-decoration:underline;color:#55639A;font-size:13px}
+  .entry-foot .sep{color:#B9BFD6}
 
   /* ---------- セットアップ未了 ---------- */
   #view-setup{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:36px 22px;background:var(--blue-soft)}
@@ -209,31 +241,39 @@
   <!-- 入口 -->
   <div id="view-entry" class="hidden">
     <div class="entry-card">
-      <div class="entry-logo">💬</div>
+      <div class="logo-bubble">···</div>
       <div class="entry-title">Re:che トーク</div>
       <span class="entry-badge">デモ版</span>
       <div class="entry-note">
-        LINEの代わりになる、Re:che専用のコミュニケーションツールの<b>お試し版</b>です。<br>
-        まだテスト環境のため、<b>本名や個人情報は入力しないでください</b>。ニックネームでお試しくださいね。
+        LINEの代わりになる、Re:che専用の<br>コミュニケーションツールのお試し版です。<br><br>
+        まだテスト環境のため、<b>本名や個人情報は入力しないでください。</b><br>
+        ニックネームでお試しくださいね。
       </div>
       <div class="field-label">1. どちらとして試しますか？</div>
       <div class="role-row">
-        <button class="role-card" id="role-student" onclick="pickRole('student')"><span class="big">🎓</span>生徒として入る</button>
-        <button class="role-card" id="role-staff" onclick="pickRole('staff')"><span class="big">🏫</span>運営として入る</button>
+        <button class="role-card role-blue" id="role-student" onclick="pickRole('student')">
+          <span class="role-ico">🎓</span>生徒として入る<span class="role-sub">学ぶ側として体験する</span>
+        </button>
+        <button class="role-card role-pink" id="role-staff" onclick="pickRole('staff')">
+          <span class="role-ico">🏫</span>運営として入る<span class="role-sub">運営側として体験する</span>
+        </button>
       </div>
       <div id="staff-pass-wrap" class="hidden">
         <div class="field-label">運営の合言葉</div>
-        <input class="text-input" id="staff-pass" placeholder="合言葉を入力（デモ版は「merone」）">
+        <div class="input-wrap"><span class="input-ico">🔑</span>
+          <input class="text-input" id="staff-pass" placeholder="合言葉を入力（デモ版は「merone」）"></div>
       </div>
       <div class="field-label">2. お名前（ニックネーム）</div>
-      <input class="text-input" id="entry-name" maxlength="12" placeholder="例）くみこ">
+      <div class="input-wrap"><span class="input-ico">👤</span>
+        <input class="text-input" id="entry-name" maxlength="12" placeholder="例）くみこ"></div>
       <div class="field-label">3. アイコンを選ぶ</div>
       <div class="icon-grid" id="icon-grid"></div>
+      <input type="file" id="avatar-input" accept="image/*" class="hidden" onchange="pickPhoto(this)">
       <div class="field-label">アイコンの背景色</div>
       <div class="color-row" id="color-row"></div>
       <button class="cta" id="entry-start" onclick="startApp()">はじめる</button>
       <div class="entry-foot">
-        <button onclick="openDiag()">🩺 動作チェック</button>
+        <button onclick="openDiag()">🩺 動作チェック</button><span class="sep">｜</span>
         <button onclick="openBugModal()">不具合を報告</button>
       </div>
     </div>
@@ -439,8 +479,17 @@ function fmtListTime(iso){
   if (diff === 1) return 'きのう';
   return (d.getMonth()+1) + '/' + d.getDate() + '(' + YOBI[d.getDay()] + ')';
 }
+function isPhotoIcon(icon){ return /^(data:|https?:)/.test(icon || ''); }
 function avatarEl(icon, color, sm){
-  return '<div class="avatar' + (sm ? ' sm' : '') + '" style="background:' + esc(color || '#A8D8EA') + '">' + esc(icon || '🙂') + '</div>';
+  var inner = isPhotoIcon(icon)
+    ? '<img src="' + esc(icon) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
+    : esc(icon || '🙂');
+  return '<div class="avatar' + (sm ? ' sm' : '') + '" style="background:' + esc(color || '#A8D8EA') + '">' + inner + '</div>';
+}
+function iconChip(icon){
+  if (!icon) return '';
+  if (isPhotoIcon(icon)) return '<img class="mini-icon" src="' + esc(icon) + '" alt="">';
+  return esc(icon);
 }
 function isMissingTable(err){
   var s = (err && (err.code + ' ' + err.message)) || '';
@@ -453,7 +502,7 @@ function show(viewId){
 }
 
 /* ---------- 入口 ---------- */
-var selRole = '', selIcon = ICONS[0], selColor = COLORS[0];
+var selRole = '', selIcon = ICONS[0], selColor = COLORS[0], photoUrl = '';
 function pickRole(r){
   selRole = r;
   $('role-student').classList.toggle('sel', r === 'student');
@@ -461,12 +510,63 @@ function pickRole(r){
   $('staff-pass-wrap').classList.toggle('hidden', r !== 'staff');
 }
 function buildEntryPickers(){
-  $('icon-grid').innerHTML = ICONS.map(function(ic, i){
-    return '<button class="icon-pick' + (i===0?' sel':'') + '" onclick="pickIcon(this,\'' + ic + '\')">' + ic + '</button>';
+  $('icon-grid').innerHTML =
+    '<button class="icon-pick photo-tile' + (photoUrl && selIcon === photoUrl ? ' sel' : '') + '" onclick="pickPhotoTile()">' +
+    (photoUrl ? '<img src="' + photoUrl + '" alt="写真">' : '📷<small>写真</small>') + '</button>' +
+    ICONS.map(function(ic){
+      return '<button class="icon-pick' + (selIcon === ic ? ' sel' : '') + '" onclick="pickIcon(this,\'' + ic + '\')">' + ic + '</button>';
+    }).join('');
+  $('color-row').innerHTML = COLORS.map(function(c){
+    return '<button class="color-pick' + (selColor === c ? ' sel' : '') + '" style="background:' + c + '" onclick="pickColor(this,\'' + c + '\')"></button>';
   }).join('');
-  $('color-row').innerHTML = COLORS.map(function(c, i){
-    return '<button class="color-pick' + (i===0?' sel':'') + '" style="background:' + c + '" onclick="pickColor(this,\'' + c + '\')"></button>';
-  }).join('');
+}
+function pickPhotoTile(){
+  if (photoUrl) { selIcon = photoUrl; buildEntryPickers(); }
+  else $('avatar-input').click();
+}
+function cropSquare(file, size, quality){
+  return new Promise(function(resolve, reject){
+    var img = new Image();
+    var fr = new FileReader();
+    fr.onload = function(){ img.src = fr.result; };
+    fr.onerror = reject;
+    img.onload = function(){
+      var s = Math.min(img.width, img.height);
+      var sx = (img.width - s) / 2, sy = (img.height - s) / 2;
+      var cv = document.createElement('canvas'); cv.width = size; cv.height = size;
+      cv.getContext('2d').drawImage(img, sx, sy, s, s, 0, 0, size, size);
+      cv.toBlob(function(b){ b ? resolve(b) : reject(new Error('画像変換失敗')); }, 'image/jpeg', quality || 0.85);
+    };
+    img.onerror = reject;
+    fr.readAsDataURL(file);
+  });
+}
+async function pickPhoto(input){
+  var file = input.files && input.files[0];
+  input.value = '';
+  if (!file) return;
+  toast('写真を読み込んでいます。。');
+  try {
+    var blob = await cropSquare(file, 256, 0.85);
+    var url = '';
+    var up = await sb.storage.from('rtalk-media').upload('avatars/' + uuid() + '.jpg', blob, { contentType: 'image/jpeg' });
+    if (!up.error && up.data && up.data.path) {
+      var pub = sb.storage.from('rtalk-media').getPublicUrl(up.data.path);
+      url = pub && pub.data ? pub.data.publicUrl : '';
+    }
+    if (!url) {
+      // storageが使えない環境ではデータURLで代用
+      var small = await cropSquare(file, 128, 0.72);
+      url = await blobToDataUrl(small);
+      if (url.length > 60000) { toast('写真の変換に失敗しました。。別の写真でお試しください'); return; }
+    }
+    photoUrl = url; selIcon = url;
+    buildEntryPickers();
+    toast('写真をアイコンに設定しました ☺️');
+  } catch(e) {
+    logErr('写真取込失敗: ' + (e.message || e));
+    toast('写真の読み込みに失敗しました。。別の写真でお試しください');
+  }
 }
 function pickIcon(btn, ic){
   selIcon = ic;
@@ -578,7 +678,7 @@ function renderInbox(){
     var unread = r.last_msg_at && (!myReads[r.id] || new Date(r.last_msg_at) > new Date(myReads[r.id]));
     var status;
     if (r.needs_reply) status = '<span class="badge-need">未対応</span>';
-    else if (r.handled_by_name) status = '<span class="badge-done">✓ ' + esc(r.handled_by_icon) + ' ' + esc(r.handled_by_name) + '</span>';
+    else if (r.handled_by_name) status = '<span class="badge-done">✓ ' + iconChip(r.handled_by_icon) + ' ' + esc(r.handled_by_name) + '</span>';
     else status = '';
     return '<div class="room-row" onclick="openRoomById(\'' + r.id + '\')">' +
       avatarEl(r.student_icon, r.student_color) +
@@ -816,7 +916,7 @@ function renderHandledBar(){
     tg.textContent = '対応済みにする'; tg.classList.remove('done');
   } else {
     info.innerHTML = curRoom.handled_by_name
-      ? '<span class="badge-done">✓ ' + esc(curRoom.handled_by_icon) + ' ' + esc(curRoom.handled_by_name) + ' が対応</span>'
+      ? '<span class="badge-done">✓ ' + iconChip(curRoom.handled_by_icon) + ' ' + esc(curRoom.handled_by_name) + ' が対応</span>'
       : '<span class="badge-done">✓ 対応済み</span>';
     tg.textContent = '未対応に戻す'; tg.classList.add('done');
   }
@@ -840,7 +940,7 @@ async function loadBcHistory(){
   var list = r.error ? [] : (r.data || []);
   $('bc-history').innerHTML = list.length ? list.map(function(b){
     return '<div class="hist-item">' + esc(b.body) +
-      '<div class="hist-meta">' + esc(b.sender_icon) + ' ' + esc(b.sender_name) + '｜' + b.sent_count + '人に配信｜' +
+      '<div class="hist-meta">' + iconChip(b.sender_icon) + ' ' + esc(b.sender_name) + '｜' + b.sent_count + '人に配信｜' +
       fmtListTime(b.created_at) + ' ' + fmtTime(b.created_at) + '</div></div>';
   }).join('') : '<div class="empty-note">まだ配信履歴はありません</div>';
 }
