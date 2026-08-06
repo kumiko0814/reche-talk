@@ -220,6 +220,32 @@
   #debug-panel{position:fixed;left:0;right:0;bottom:0;max-height:32vh;overflow-y:auto;background:rgba(20,20,30,0.92);
     color:#9fe89f;font-size:11px;font-family:Menlo,monospace;padding:8px 10px;z-index:9500;white-space:pre-wrap;word-break:break-all}
 
+  /* ---------- ノート・アルバム・グループ・ボイス ---------- */
+  #view-notes,#view-albums,#view-photos{flex:1;display:flex;flex-direction:column;min-height:0;background:var(--bg)}
+  #view-notes.hidden,#view-albums.hidden,#view-photos.hidden{display:none}
+  .note-card{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(29,53,87,0.06);
+    font-size:14px;line-height:1.7}
+  .note-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .note-title{font-weight:700;font-size:14.5px;margin-bottom:2px}
+  .note-pin{background:var(--pink-soft);color:var(--pink);font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:auto}
+  .note-meta{font-size:11px;color:var(--gray);margin-top:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .note-meta button{font-size:11px;color:var(--blue-deep);text-decoration:underline}
+  .note-card img{max-width:100%;border-radius:10px;margin-top:8px;display:block}
+  .album-card{display:flex;gap:12px;align-items:center;background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:10px;
+    box-shadow:0 1px 4px rgba(29,53,87,0.06)}
+  .album-card:active{background:var(--blue-soft)}
+  .album-cover{width:56px;height:56px;border-radius:10px;background:var(--blue-soft);flex-shrink:0;display:flex;
+    align-items:center;justify-content:center;font-size:24px;overflow:hidden}
+  .album-cover img{width:100%;height:100%;object-fit:cover;display:block}
+  .photo-grid{display:flex;flex-wrap:wrap;gap:6px}
+  .photo-cell{width:calc(33.33% - 4px);position:relative}
+  .photo-cell img{width:100%;height:110px;object-fit:cover;border-radius:8px;display:block}
+  .photo-del{position:absolute;top:4px;right:4px;background:rgba(29,53,87,0.65);color:#fff;border-radius:50%;
+    width:22px;height:22px;font-size:11px;display:flex;align-items:center;justify-content:center}
+  .member-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #F0F4F8;font-size:14px}
+  .member-row input[type=checkbox]{width:19px;height:19px;margin-left:auto;flex-shrink:0}
+  .bubble.media audio{width:216px;max-width:100%;display:block}
+
   @media (max-width:640px){
     .topbar .title{font-size:15px}
   }
@@ -295,12 +321,13 @@
   <div id="view-inbox" class="hidden">
     <div class="topbar">
       <div class="avatar sm" id="inbox-my-avatar">🙂</div>
-      <div class="title">Re:che トーク 運営<br><span class="sub" id="inbox-my-name"></span></div>
+      <div class="title"><span id="inbox-title-main">Re:che トーク 運営</span><br><span class="sub" id="inbox-my-name"></span></div>
       <button class="icon-btn hidden" id="notif-btn-inbox" onclick="enableNotif()" title="通知をオンにする">🔔</button>
-      <button class="icon-btn" onclick="openBroadcast()" title="一斉配信">📣</button>
+      <button class="icon-btn hidden" id="group-create-btn" onclick="openGroupModal()" title="グループを作る">👥</button>
+      <button class="icon-btn hidden" id="bc-btn" onclick="openBroadcast()" title="一斉配信">📣</button>
       <button class="icon-btn" onclick="openMenu()" title="メニュー">⋯</button>
     </div>
-    <div class="tabs">
+    <div class="tabs" id="inbox-tabs">
       <button class="tab sel" id="tab-all" onclick="setTab('all')">すべて</button>
       <button class="tab" id="tab-need" onclick="setTab('need')">未対応<span class="cnt hidden" id="need-cnt">0</span></button>
       <button class="tab" id="tab-bugs" onclick="setTab('bugs')">不具合<span class="cnt hidden" id="bug-cnt">0</span></button>
@@ -325,6 +352,7 @@
     <div class="msgs" id="msgs"></div>
     <div class="talkbar">
       <button class="tool" onclick="pickMedia()" title="画像・動画">📷</button>
+      <button class="tool" onclick="openVoice()" title="ボイスメッセージ">🎤</button>
       <input type="file" id="media-input" accept="image/*,video/*" class="hidden" onchange="sendMedia(this)">
       <textarea id="msg-input" rows="1" placeholder="メッセージを入力" oninput="autoGrow(this)"></textarea>
       <button class="tool" onclick="openStamps()" title="スタンプ">😊</button>
@@ -349,6 +377,37 @@
     </div>
   </div>
 
+  <!-- ノート -->
+  <div id="view-notes" class="hidden">
+    <div class="topbar">
+      <button class="icon-btn" onclick="backToTalk()">←</button>
+      <div class="title" id="notes-title">ノート</div>
+      <button class="icon-btn" onclick="openNoteModal()" title="ノートを書く">＋</button>
+    </div>
+    <div class="pane" id="notes-list"></div>
+  </div>
+
+  <!-- アルバム一覧 -->
+  <div id="view-albums" class="hidden">
+    <div class="topbar">
+      <button class="icon-btn" onclick="backToTalk()">←</button>
+      <div class="title" id="albums-title">アルバム</div>
+      <button class="icon-btn" onclick="openAlbumModal()" title="アルバムを作る">＋</button>
+    </div>
+    <div class="pane" id="albums-list"></div>
+  </div>
+
+  <!-- アルバムの中身 -->
+  <div id="view-photos" class="hidden">
+    <div class="topbar">
+      <button class="icon-btn" onclick="openAlbums()">←</button>
+      <div class="title" id="photos-title">写真</div>
+      <button class="icon-btn" onclick="pickAlbumPhotos()" title="写真を追加">＋</button>
+    </div>
+    <input type="file" id="album-photo-input" accept="image/*" multiple class="hidden" onchange="addAlbumPhotos(this)">
+    <div class="pane" id="photos-pane"></div>
+  </div>
+
 </div>
 
 <!-- スタンプ -->
@@ -364,6 +423,11 @@
 <div class="modal-wrap hidden" id="menu-modal" onclick="if(event.target===this)closeMenu()">
   <div class="modal">
     <h3>メニュー</h3>
+    <div id="menu-room-sec" class="hidden" style="flex-direction:column;gap:4px;margin-bottom:4px;display:flex">
+      <button class="bug-toggle" style="text-align:left" onclick="closeMenu();openNotes()">📒 ノート</button>
+      <button class="bug-toggle" style="text-align:left" onclick="closeMenu();openAlbums()">🖼 アルバム</button>
+      <button class="bug-toggle hidden" id="menu-members-btn" style="text-align:left" onclick="closeMenu();openMembers()">👥 メンバー</button>
+    </div>
     <div style="display:flex;flex-direction:column;gap:4px">
       <button class="bug-toggle" style="text-align:left" onclick="closeMenu();openDiag()">🩺 システム診断</button>
       <button class="bug-toggle" style="text-align:left" onclick="closeMenu();openBugModal()">🐛 不具合を報告</button>
@@ -389,6 +453,75 @@
     <h3>🩺 システム診断</h3>
     <div id="diag-body" style="min-height:60px"></div>
     <div class="close-row"><button onclick="closeDiag()">とじる</button></div>
+  </div>
+</div>
+
+<!-- グループ作成／メンバー追加 -->
+<div class="modal-wrap hidden" id="group-modal" onclick="if(event.target===this)closeGroupModal()">
+  <div class="modal">
+    <h3 id="group-modal-title">👥 グループを作る</h3>
+    <div id="group-name-wrap">
+      <input class="text-input" id="group-name" maxlength="20" placeholder="グループ名（例）8月入会のみなさん" style="border-radius:12px;padding-left:16px">
+    </div>
+    <div class="field-label" style="margin:12px 0 8px">メンバーを選ぶ</div>
+    <input class="text-input" id="member-search" placeholder="名前で検索" style="border-radius:12px;padding-left:16px;margin-bottom:8px" oninput="renderMemberPicker()">
+    <div id="member-picker" style="max-height:36vh;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
+    <button class="cta" id="group-create-go" onclick="submitGroup()">作成する</button>
+    <div class="close-row"><button onclick="closeGroupModal()">とじる</button></div>
+  </div>
+</div>
+
+<!-- メンバー一覧 -->
+<div class="modal-wrap hidden" id="members-modal" onclick="if(event.target===this)closeMembers()">
+  <div class="modal">
+    <h3>👥 メンバー</h3>
+    <div id="members-list"></div>
+    <button class="cta hidden" id="member-add-btn" onclick="openMemberAdd()">メンバーを追加</button>
+    <div class="close-row"><button onclick="closeMembers()">とじる</button></div>
+  </div>
+</div>
+
+<!-- ノート作成／編集 -->
+<div class="modal-wrap hidden" id="note-modal" onclick="if(event.target===this)closeNoteModal()">
+  <div class="modal">
+    <h3 id="note-modal-title">📒 ノートを書く</h3>
+    <input class="text-input" id="note-title" maxlength="30" placeholder="タイトル（任意）" style="border-radius:12px;padding-left:16px;margin-bottom:10px">
+    <textarea id="note-body" placeholder="本文を入力"></textarea>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+      <button class="bug-toggle" onclick="$('note-image-input').click()">🖼 画像を付ける</button>
+      <span id="note-image-state" style="font-size:12px;color:var(--gray)"></span>
+      <label id="note-pin-wrap" class="hidden" style="font-size:13px;margin-left:auto"><input type="checkbox" id="note-pin"> 📌 ピン留め</label>
+    </div>
+    <input type="file" id="note-image-input" accept="image/*" class="hidden" onchange="pickNoteImage(this)">
+    <button class="cta" onclick="submitNote()">投稿する</button>
+    <div class="close-row"><button onclick="closeNoteModal()">とじる</button></div>
+  </div>
+</div>
+
+<!-- アルバム作成 -->
+<div class="modal-wrap hidden" id="album-modal" onclick="if(event.target===this)closeAlbumModal()">
+  <div class="modal">
+    <h3>🖼 アルバムを作る</h3>
+    <input class="text-input" id="album-title" maxlength="24" placeholder="アルバム名（例）7月の勉強会" style="border-radius:12px;padding-left:16px">
+    <button class="cta" onclick="submitAlbum()">作成する</button>
+    <div class="close-row"><button onclick="closeAlbumModal()">とじる</button></div>
+  </div>
+</div>
+
+<!-- ボイス録音 -->
+<div class="modal-wrap hidden" id="voice-modal" onclick="if(event.target===this)closeVoice()">
+  <div class="modal" style="text-align:center">
+    <h3>🎤 ボイスメッセージ</h3>
+    <div id="voice-timer" style="font-size:30px;font-weight:700;margin:10px 0">0:00</div>
+    <div id="voice-controls">
+      <button class="cta" id="voice-rec-btn" onclick="toggleRec()">録音をはじめる</button>
+    </div>
+    <audio id="voice-preview" controls playsinline class="hidden" style="width:100%;margin-top:12px"></audio>
+    <div id="voice-actions" class="hidden" style="gap:10px;margin-top:12px;display:flex">
+      <button class="bug-toggle" style="flex:1" onclick="resetRec()">録り直す</button>
+      <button class="cta" style="flex:1;margin-top:0" onclick="sendVoice()">送信する</button>
+    </div>
+    <div class="close-row"><button onclick="closeVoice()">とじる</button></div>
   </div>
 </div>
 
@@ -440,6 +573,12 @@ var tab = 'all';
 var channel = null;
 var sending = false;
 var readTimer = null;
+var myGroupIds = {};         // 自分が入っているグループ room_id -> true
+var myRoomIds = {};          // 通知対象のルーム（自分の個別ルーム＋グループ）
+var pickerUsers = [], pickerSel = {}, pickerMode = 'create';
+var curNotes = [], curAlbums = [], curAlbum = null, curPhotos = [], curMembers = [];
+var noteImageUrl = '', editingNoteId = '';
+var mediaRec = null, recChunks = [], recBlob = null, recMime = '', recTimer = null, recStart = 0, recStream = null;
 
 var ICONS = ['🙂','🐰','🐻','🐱','🐶','🐥','🦊','🐼','🌸','🍀','🍎','☕','📚','🎧','⚽','🎨'];
 var COLORS = ['#A8D8EA','#F3C9D7','#BFE0C9','#F5DFA8','#CDC5EC','#F0C8AE'];
@@ -498,9 +637,20 @@ function isMissingTable(err){
   return /42P01|PGRST205|does not exist|schema cache/i.test(s);
 }
 function show(viewId){
-  ['view-entry','view-setup','view-inbox','view-talk','view-bc'].forEach(function(v){
+  ['view-entry','view-setup','view-inbox','view-talk','view-bc','view-notes','view-albums','view-photos'].forEach(function(v){
     $(v).classList.toggle('hidden', v !== viewId);
   });
+}
+function roomDisplayName(r){
+  if (r.type === 'group') return r.name;
+  return (me && me.role === 'student' && r.student_id === me.id) ? 'Re:che サポート' : r.name;
+}
+function featureGuard(err){
+  if (err && isMissingTable(err)) {
+    toast('新機能のセットアップが必要です。setup.html のSQLをもう一度RUNしてください');
+    return true;
+  }
+  return false;
 }
 
 /* ---------- 入口 ---------- */
@@ -616,7 +766,14 @@ function resetDemo(){
 }
 
 /* ---------- メイン導線 ---------- */
+async function loadMyGroups(){
+  var r = await sb.from('rtalk_room_members').select('room_id').eq('user_id', me.id);
+  myGroupIds = {};
+  if (!r.error) (r.data || []).forEach(function(x){ myGroupIds[x.room_id] = true; });
+  else if (isMissingTable(r.error)) logErr('グループ用テーブル未作成（追加SQLのRUN待ち）');
+}
 async function enterMain(){
+  await loadMyGroups();
   if (me.role === 'student') {
     if (!myRoom) {
       var r = await sb.from('rtalk_rooms').select('*').eq('student_id', me.id).limit(1);
@@ -630,27 +787,52 @@ async function enterMain(){
         if (r2.error) throw r2.error;
       }
     }
-    startRealtime();
-    await openTalk(myRoom);
+    $('inbox-title-main').textContent = 'Re:che トーク';
+    $('inbox-my-name').textContent = me.name + ' さん';
+    $('inbox-tabs').classList.add('hidden');
+    $('bc-btn').classList.add('hidden');
+    $('group-create-btn').classList.add('hidden');
   } else {
-    $('inbox-my-avatar').outerHTML = avatarEl(me.icon, me.color, true).replace('class="avatar sm"', 'class="avatar sm" id="inbox-my-avatar"');
+    $('inbox-title-main').textContent = 'Re:che トーク 運営';
     $('inbox-my-name').textContent = me.name + ' として対応中';
-    startRealtime();
-    await loadInbox();
-    show('view-inbox');
+    $('inbox-tabs').classList.remove('hidden');
+    $('bc-btn').classList.remove('hidden');
+    $('group-create-btn').classList.remove('hidden');
   }
+  $('inbox-my-avatar').outerHTML = avatarEl(me.icon, me.color, true).replace('class="avatar sm"', 'class="avatar sm" id="inbox-my-avatar"');
+  startRealtime();
+  await loadInbox();
+  show('view-inbox');
   refreshNotifBtns();
 }
 
-/* ---------- 受信箱（運営） ---------- */
+/* ---------- トークリスト（生徒・運営 共通） ---------- */
 async function loadInbox(){
-  var r = await sb.from('rtalk_rooms').select('*').order('last_msg_at', {ascending:false}).limit(300);
-  if (r.error) { if (isMissingTable(r.error)) { show('view-setup'); return; } throw r.error; }
-  rooms = r.data || [];
+  var q1;
+  if (me.role === 'staff') q1 = await sb.from('rtalk_rooms').select('*').eq('type', 'student').order('last_msg_at', {ascending:false}).limit(300);
+  else q1 = await sb.from('rtalk_rooms').select('*').eq('student_id', me.id).limit(5);
+  if (q1.error) { if (isMissingTable(q1.error)) { show('view-setup'); return; } throw q1.error; }
+  var list = q1.data || [];
+  var gids = Object.keys(myGroupIds);
+  if (gids.length) {
+    var q2 = await sb.from('rtalk_rooms').select('*').in('id', gids).limit(200);
+    if (!q2.error) {
+      (q2.data || []).forEach(function(g){
+        if (!list.some(function(x){ return x.id === g.id; })) list.push(g);
+      });
+    }
+  }
+  rooms = list.sort(function(a, b){ return new Date(b.last_msg_at || 0) - new Date(a.last_msg_at || 0); });
+  myRoomIds = {};
+  rooms.forEach(function(r){
+    if (r.type === 'group' || (me.role === 'student' && r.student_id === me.id)) myRoomIds[r.id] = true;
+  });
   var r2 = await sb.from('rtalk_reads').select('*').eq('user_id', me.id);
   if (!r2.error) (r2.data || []).forEach(function(x){ myReads[x.room_id] = x.last_read_at; });
-  var r3 = await sb.from('rtalk_bug_reports').select('*').order('created_at', {ascending:false}).limit(100);
-  if (!r3.error) bugs = r3.data || [];
+  if (me.role === 'staff') {
+    var r3 = await sb.from('rtalk_bug_reports').select('*').order('created_at', {ascending:false}).limit(100);
+    if (!r3.error) bugs = r3.data || [];
+  }
   renderInbox();
 }
 function setTab(t){
@@ -662,7 +844,7 @@ function setTab(t){
   if (t === 'bugs') renderBugs(); else renderInbox();
 }
 function renderInbox(){
-  var needCnt = rooms.filter(function(r){ return r.needs_reply; }).length;
+  var needCnt = rooms.filter(function(r){ return r.needs_reply && r.type === 'student'; }).length;
   var nc = $('need-cnt'); nc.textContent = needCnt; nc.classList.toggle('hidden', needCnt === 0);
   var openBugs = bugs.filter(function(b){ return !b.resolved; }).length;
   var bc = $('bug-cnt'); bc.textContent = openBugs; bc.classList.toggle('hidden', openBugs === 0);
@@ -670,8 +852,8 @@ function renderInbox(){
   updateTitleBadge();
   var q = ($('inbox-search').value || '').trim();
   var list = rooms.slice();
-  if (tab === 'need') list = list.filter(function(r){ return r.needs_reply; });
-  if (q) list = list.filter(function(r){ return (r.name || '').indexOf(q) >= 0; });
+  if (tab === 'need') list = list.filter(function(r){ return r.needs_reply && r.type === 'student'; });
+  if (q) list = list.filter(function(r){ return (roomDisplayName(r) || '').indexOf(q) >= 0; });
 
   if (!list.length) {
     $('room-list').innerHTML = '<div class="empty-note">' +
@@ -679,15 +861,19 @@ function renderInbox(){
     return;
   }
   $('room-list').innerHTML = list.map(function(r){
+    var isGroup = r.type === 'group';
+    var mineStu = me.role === 'student' && r.student_id === me.id;
+    var av = isGroup ? avatarEl('👥', '#CDC5EC') : (mineStu ? avatarEl('💬', '#A8D8EA') : avatarEl(r.student_icon, r.student_color));
     var unread = r.last_msg_at && (!myReads[r.id] || new Date(r.last_msg_at) > new Date(myReads[r.id]));
-    var status;
-    if (r.needs_reply) status = '<span class="badge-need">未対応</span>';
-    else if (r.handled_by_name) status = '<span class="badge-done">✓ ' + iconChip(r.handled_by_icon) + ' ' + esc(r.handled_by_name) + '</span>';
-    else status = '';
+    var status = '';
+    if (r.type === 'student' && me.role === 'staff') {
+      if (r.needs_reply) status = '<span class="badge-need">未対応</span>';
+      else if (r.handled_by_name) status = '<span class="badge-done">✓ ' + iconChip(r.handled_by_icon) + ' ' + esc(r.handled_by_name) + '</span>';
+    }
     return '<div class="room-row" onclick="openRoomById(\'' + r.id + '\')">' +
-      avatarEl(r.student_icon, r.student_color) +
+      av +
       '<div class="room-main">' +
-        '<div class="room-name-line"><span class="room-name">' + esc(r.name) + '</span>' + (unread ? '<span class="dot-unread"></span>' : '') + '</div>' +
+        '<div class="room-name-line"><span class="room-name">' + esc(roomDisplayName(r)) + '</span>' + (unread ? '<span class="dot-unread"></span>' : '') + '</div>' +
         '<div class="room-prev">' + esc(r.last_msg_preview || '') + '</div>' +
       '</div>' +
       '<div class="room-side"><span class="room-time">' + fmtListTime(r.last_msg_at) + '</span>' + status + '</div>' +
@@ -703,12 +889,16 @@ function openRoomById(id){
 async function openTalk(room){
   curRoom = room;
   msgs = []; oldestLoaded = null; hasOlder = false; roomReads = [];
-  $('talk-title').innerHTML = me.role === 'student'
-    ? 'Re:che サポート<br><span class="sub">困ったことは何でもどうぞ</span>'
-    : esc(room.name) + '<br><span class="sub">生徒さんの専用ルーム</span>';
-  $('talk-back').classList.toggle('hidden', me.role === 'student');
-  $('handled-bar').classList.toggle('hidden', me.role !== 'staff');
-  if (me.role === 'staff') renderHandledBar();
+  var isGroup = room.type === 'group';
+  $('talk-title').innerHTML = isGroup
+    ? esc(room.name) + '<br><span class="sub">グループトーク</span>'
+    : (me.role === 'student'
+      ? 'Re:che サポート<br><span class="sub">困ったことは何でもどうぞ</span>'
+      : esc(room.name) + '<br><span class="sub">生徒さんの専用ルーム</span>');
+  $('talk-back').classList.remove('hidden');
+  var showHandled = me.role === 'staff' && room.type === 'student';
+  $('handled-bar').classList.toggle('hidden', !showHandled);
+  if (showHandled) renderHandledBar();
   show('view-talk');
   refreshNotifBtns();
   $('msgs').innerHTML = '<div class="empty-note">読み込み中です。。</div>';
@@ -766,6 +956,7 @@ function renderMsgs(scrollBottom){
     if (m.kind === 'stamp') body = '<div class="bubble stamp">' + esc(m.body) + '</div>';
     else if (m.kind === 'image') body = '<div class="bubble media"><img src="' + esc(m.body) + '" loading="lazy" onclick="viewImg(this.src)" alt="画像"></div>';
     else if (m.kind === 'video') body = '<div class="bubble media"><video src="' + esc(m.body) + '" controls playsinline preload="metadata"></video></div>';
+    else if (m.kind === 'voice') body = '<div class="bubble media"><audio src="' + esc(m.body) + '" controls playsinline preload="metadata"></audio></div>';
     else body = '<div class="bubble">' + esc(m.body) + '</div>';
     var rc = mine ? readCountFor(m) : 0;
     var readTxt = mine && rc > 0 ? '<span>既読' + (rc > 1 ? rc : '') + '</span>' : '';
@@ -798,14 +989,19 @@ async function insertMessage(kind, body){
   msgs.push(m); renderMsgs(true);
   var r = await sb.from('rtalk_messages').insert(m);
   if (r.error) { msgs = msgs.filter(function(x){ return x.id !== m.id; }); renderMsgs(true); throw r.error; }
-  var prev = kind === 'text' ? body : (kind === 'stamp' ? '[スタンプ]' : kind === 'image' ? '[画像]' : '[動画]');
+  var prev = kind === 'text' ? body
+    : kind === 'stamp' ? '[スタンプ]'
+    : kind === 'image' ? '[画像]'
+    : kind === 'voice' ? '[ボイスメッセージ]' : '[動画]';
   var upd = { last_msg_at: m.created_at, last_msg_preview: prev.slice(0, 60), last_sender_role: me.role };
-  if (me.role === 'student') { upd.needs_reply = true; upd.handled_by_name = ''; upd.handled_by_icon = ''; upd.handled_at = null; }
-  else { upd.needs_reply = false; upd.handled_by_name = me.name; upd.handled_by_icon = me.icon; upd.handled_at = m.created_at; }
+  if (curRoom.type === 'student') {
+    if (me.role === 'student') { upd.needs_reply = true; upd.handled_by_name = ''; upd.handled_by_icon = ''; upd.handled_at = null; }
+    else { upd.needs_reply = false; upd.handled_by_name = me.name; upd.handled_by_icon = me.icon; upd.handled_at = m.created_at; }
+  }
   var r2 = await sb.from('rtalk_rooms').update(upd).eq('id', curRoom.id);
   if (r2.error) logErr('ルーム更新失敗: ' + r2.error.message);
   Object.assign(curRoom, upd);
-  if (me.role === 'staff') renderHandledBar();
+  if (me.role === 'staff' && curRoom.type === 'student') renderHandledBar();
   markRead();
   return m;
 }
@@ -1030,7 +1226,12 @@ function openStamps(){
   $('stamp-modal').classList.remove('hidden');
 }
 function closeStamps(){ $('stamp-modal').classList.add('hidden'); }
-function openMenu(){ $('menu-modal').classList.remove('hidden'); }
+function openMenu(){
+  var talkOpen = !$('view-talk').classList.contains('hidden') && !!curRoom;
+  $('menu-room-sec').classList.toggle('hidden', !talkOpen);
+  if (talkOpen) $('menu-members-btn').classList.toggle('hidden', curRoom.type !== 'group');
+  $('menu-modal').classList.remove('hidden');
+}
 function closeMenu(){ $('menu-modal').classList.add('hidden'); }
 
 /* ---------- 診断 ---------- */
@@ -1074,6 +1275,373 @@ async function runDiag(){
   body.innerHTML = lines.join('');
 }
 
+/* ---------- グループ ---------- */
+function openGroupModal(){
+  pickerMode = 'create'; pickerSel = {}; pickerSel[me.id] = true;
+  $('group-modal-title').textContent = '👥 グループを作る';
+  $('group-name-wrap').classList.remove('hidden');
+  $('group-name').value = '';
+  $('member-search').value = '';
+  $('group-create-go').textContent = '作成する';
+  $('group-modal').classList.remove('hidden');
+  loadPickerUsers();
+}
+function closeGroupModal(){ $('group-modal').classList.add('hidden'); }
+async function loadPickerUsers(){
+  $('member-picker').innerHTML = '<div class="empty-note">読み込み中です。。</div>';
+  var r = await sb.from('rtalk_users').select('*').order('created_at', {ascending:false}).limit(300);
+  if (r.error) { if (!featureGuard(r.error)) $('member-picker').innerHTML = '<div class="empty-note">読み込みに失敗しました。。</div>'; return; }
+  pickerUsers = r.data || [];
+  if (pickerMode === 'add') {
+    pickerUsers = pickerUsers.filter(function(u){
+      return !curMembers.some(function(m2){ return m2.user_id === u.id; });
+    });
+  }
+  renderMemberPicker();
+}
+function renderMemberPicker(){
+  var q = ($('member-search').value || '').trim();
+  var list = pickerUsers.filter(function(u){ return !q || (u.name || '').indexOf(q) >= 0; });
+  $('member-picker').innerHTML = list.length ? list.map(function(u){
+    var self = u.id === me.id;
+    return '<label class="member-row">' + avatarEl(u.icon, u.color, true) +
+      '<span>' + esc(u.name) + (u.role === 'staff' ? '（運営）' : '') + (self ? '（自分）' : '') + '</span>' +
+      '<input type="checkbox" onchange="togglePick(\'' + u.id + '\',this.checked)"' +
+      (pickerSel[u.id] ? ' checked' : '') + (self && pickerMode === 'create' ? ' disabled' : '') + '></label>';
+  }).join('') : '<div class="empty-note">見つかりませんでした</div>';
+}
+function togglePick(id, on){ if (on) pickerSel[id] = true; else delete pickerSel[id]; }
+function pickerRows(roomId){
+  return Object.keys(pickerSel).map(function(id){
+    var u = pickerUsers.filter(function(x){ return x.id === id; })[0]
+      || { id: me.id, name: me.name, role: me.role, icon: me.icon, color: me.color };
+    return { room_id: roomId, user_id: u.id, user_name: u.name, user_role: u.role, user_icon: u.icon, user_color: u.color };
+  });
+}
+async function submitGroup(){
+  if (pickerMode === 'add') { await submitMemberAdd(); return; }
+  var name = $('group-name').value.trim();
+  if (!name) { toast('グループ名を入力してください'); return; }
+  if (Object.keys(pickerSel).length < 2) { toast('メンバーを1人以上選んでください'); return; }
+  var room = { id: uuid(), name: name, type: 'group', student_id: null,
+    student_icon: '👥', student_color: '#CDC5EC',
+    last_msg_at: new Date().toISOString(), last_msg_preview: '（グループが作成されました）',
+    last_sender_role: '', needs_reply: false };
+  var r = await sb.from('rtalk_rooms').insert(room);
+  if (r.error) { if (!featureGuard(r.error)) toast('グループ作成に失敗しました。。'); return; }
+  var r2 = await sb.from('rtalk_room_members').insert(pickerRows(room.id));
+  if (r2.error) { if (!featureGuard(r2.error)) toast('メンバー登録に失敗しました。。'); return; }
+  myGroupIds[room.id] = true; myRoomIds[room.id] = true;
+  rooms.unshift(room);
+  closeGroupModal();
+  toast('グループを作成しました ☺️');
+  openTalk(room);
+}
+async function openMembers(){
+  if (!curRoom || curRoom.type !== 'group') return;
+  $('members-modal').classList.remove('hidden');
+  $('members-list').innerHTML = '<div class="empty-note">読み込み中です。。</div>';
+  var r = await sb.from('rtalk_room_members').select('*').eq('room_id', curRoom.id).order('created_at');
+  if (r.error) { featureGuard(r.error); $('members-list').innerHTML = '<div class="empty-note">読み込みに失敗しました。。</div>'; return; }
+  curMembers = r.data || [];
+  $('members-list').innerHTML = curMembers.map(function(m2){
+    return '<div class="member-row">' + avatarEl(m2.user_icon, m2.user_color, true) +
+      '<span>' + esc(m2.user_name) + (m2.user_role === 'staff' ? '（運営）' : '') + '</span></div>';
+  }).join('') || '<div class="empty-note">メンバーがいません</div>';
+  $('member-add-btn').classList.toggle('hidden', me.role !== 'staff');
+}
+function closeMembers(){ $('members-modal').classList.add('hidden'); }
+function openMemberAdd(){
+  closeMembers();
+  pickerMode = 'add'; pickerSel = {};
+  $('group-modal-title').textContent = '👥 メンバーを追加';
+  $('group-name-wrap').classList.add('hidden');
+  $('member-search').value = '';
+  $('group-create-go').textContent = '追加する';
+  $('group-modal').classList.remove('hidden');
+  loadPickerUsers();
+}
+async function submitMemberAdd(){
+  if (!curRoom) return;
+  var ids = Object.keys(pickerSel);
+  if (!ids.length) { toast('追加するメンバーを選んでください'); return; }
+  var r = await sb.from('rtalk_room_members').insert(pickerRows(curRoom.id));
+  if (r.error) { if (!featureGuard(r.error)) toast('追加に失敗しました。。'); return; }
+  closeGroupModal();
+  toast(ids.length + '人を追加しました');
+}
+
+/* ---------- ノート ---------- */
+function backToTalk(){ if (curRoom) openTalk(curRoom); else show('view-inbox'); }
+async function openNotes(){
+  if (!curRoom) return;
+  show('view-notes');
+  $('notes-title').innerHTML = 'ノート<br><span class="sub">' + esc(roomDisplayName(curRoom)) + '</span>';
+  $('notes-list').innerHTML = '<div class="empty-note">読み込み中です。。</div>';
+  var r = await sb.from('rtalk_notes').select('*').eq('room_id', curRoom.id)
+    .order('pinned', {ascending:false}).order('created_at', {ascending:false}).limit(100);
+  if (r.error) { if (featureGuard(r.error)) { backToTalk(); } else $('notes-list').innerHTML = '<div class="empty-note">読み込みに失敗しました。。</div>'; return; }
+  curNotes = r.data || [];
+  renderNotes();
+}
+function renderNotes(){
+  $('notes-list').innerHTML = curNotes.length ? curNotes.map(function(n){
+    var canEdit = n.author_id === me.id || me.role === 'staff';
+    return '<div class="note-card">' +
+      '<div class="note-head">' + avatarEl(n.author_icon, n.author_color, true) +
+        '<span style="font-size:12px;color:var(--navy2)">' + esc(n.author_name) + '</span>' +
+        (n.pinned ? '<span class="note-pin">📌 ピン留め</span>' : '') + '</div>' +
+      (n.title ? '<div class="note-title">' + esc(n.title) + '</div>' : '') +
+      '<div style="white-space:pre-wrap">' + esc(n.body) + '</div>' +
+      (n.image_url ? '<img src="' + esc(n.image_url) + '" loading="lazy" onclick="viewImg(this.src)" alt="ノート画像">' : '') +
+      '<div class="note-meta"><span>' + fmtListTime(n.created_at) + ' ' + fmtTime(n.created_at) + '</span>' +
+        (canEdit ? '<button onclick="editNote(\'' + n.id + '\')">編集</button><button onclick="deleteNote(\'' + n.id + '\')">削除</button>' : '') +
+        (me.role === 'staff' ? '<button onclick="togglePin(\'' + n.id + '\')">' + (n.pinned ? 'ピン解除' : 'ピン留め') + '</button>' : '') +
+      '</div></div>';
+  }).join('') : '<div class="empty-note">まだノートはありません。<br>右上の＋から書けます ☺️</div>';
+}
+function openNoteModal(){
+  editingNoteId = ''; noteImageUrl = '';
+  $('note-modal-title').textContent = '📒 ノートを書く';
+  $('note-title').value = ''; $('note-body').value = '';
+  $('note-image-state').textContent = '';
+  $('note-pin').checked = false;
+  $('note-pin-wrap').classList.toggle('hidden', me.role !== 'staff');
+  $('note-modal').classList.remove('hidden');
+}
+function closeNoteModal(){ $('note-modal').classList.add('hidden'); }
+function editNote(id){
+  var n = curNotes.filter(function(x){ return x.id === id; })[0];
+  if (!n) return;
+  editingNoteId = id; noteImageUrl = n.image_url || '';
+  $('note-modal-title').textContent = '📒 ノートを編集';
+  $('note-title').value = n.title || ''; $('note-body').value = n.body || '';
+  $('note-image-state').textContent = noteImageUrl ? '画像あり' : '';
+  $('note-pin').checked = !!n.pinned;
+  $('note-pin-wrap').classList.toggle('hidden', me.role !== 'staff');
+  $('note-modal').classList.remove('hidden');
+}
+async function pickNoteImage(input){
+  var file = input.files && input.files[0];
+  input.value = '';
+  if (!file) return;
+  toast('画像を読み込んでいます。。');
+  try {
+    var blob = await shrinkImage(file, 1280, 0.85);
+    var path = 'notes/' + (curRoom ? curRoom.id : 'misc') + '/' + uuid() + '.jpg';
+    var up = await sb.storage.from('rtalk-media').upload(path, blob, { contentType: 'image/jpeg' });
+    var url = '';
+    if (!up.error) url = sb.storage.from('rtalk-media').getPublicUrl(path).data.publicUrl;
+    if (!url) {
+      var small = await shrinkImage(file, 800, 0.7);
+      var d = await blobToDataUrl(small);
+      if (d.length <= 900000) url = d;
+    }
+    if (!url) { toast('画像の読み込みに失敗しました。。'); return; }
+    noteImageUrl = url;
+    $('note-image-state').textContent = '画像を添付しました';
+  } catch(e) { logErr('ノート画像失敗: ' + (e.message || e)); toast('画像の読み込みに失敗しました。。'); }
+}
+async function submitNote(){
+  if (!curRoom) return;
+  var body = $('note-body').value.trim();
+  var title = $('note-title').value.trim();
+  if (!body && !noteImageUrl) { toast('本文を入力してください'); return; }
+  var pinned = me.role === 'staff' ? $('note-pin').checked : false;
+  var r;
+  if (editingNoteId) {
+    r = await sb.from('rtalk_notes').update({ title: title, body: body, image_url: noteImageUrl, pinned: pinned, updated_at: new Date().toISOString() }).eq('id', editingNoteId);
+  } else {
+    r = await sb.from('rtalk_notes').insert({ id: uuid(), room_id: curRoom.id,
+      author_id: me.id, author_name: me.name, author_icon: me.icon, author_color: me.color,
+      title: title, body: body, image_url: noteImageUrl, pinned: pinned });
+  }
+  if (r.error) { if (!featureGuard(r.error)) toast('投稿に失敗しました。。'); return; }
+  closeNoteModal();
+  toast(editingNoteId ? 'ノートを更新しました' : 'ノートを投稿しました ☺️');
+  openNotes();
+}
+async function deleteNote(id){
+  if (!confirm('このノートを削除しますか？')) return;
+  var r = await sb.from('rtalk_notes').delete().eq('id', id);
+  if (r.error) { toast('削除に失敗しました。。'); return; }
+  openNotes();
+}
+async function togglePin(id){
+  var n = curNotes.filter(function(x){ return x.id === id; })[0];
+  if (!n) return;
+  var r = await sb.from('rtalk_notes').update({ pinned: !n.pinned }).eq('id', id);
+  if (r.error) { toast('切り替えに失敗しました。。'); return; }
+  openNotes();
+}
+
+/* ---------- アルバム ---------- */
+async function openAlbums(){
+  if (!curRoom) return;
+  show('view-albums');
+  $('albums-title').innerHTML = 'アルバム<br><span class="sub">' + esc(roomDisplayName(curRoom)) + '</span>';
+  $('albums-list').innerHTML = '<div class="empty-note">読み込み中です。。</div>';
+  var r = await sb.from('rtalk_albums').select('*').eq('room_id', curRoom.id).order('created_at', {ascending:false}).limit(100);
+  if (r.error) { if (featureGuard(r.error)) { backToTalk(); } else $('albums-list').innerHTML = '<div class="empty-note">読み込みに失敗しました。。</div>'; return; }
+  curAlbums = r.data || [];
+  $('albums-list').innerHTML = curAlbums.length ? curAlbums.map(function(a){
+    var cover = a.cover_url ? '<span class="album-cover"><img src="' + esc(a.cover_url) + '" alt=""></span>' : '<span class="album-cover">🖼</span>';
+    return '<div class="album-card" onclick="openAlbum(\'' + a.id + '\')">' + cover +
+      '<div style="flex:1;min-width:0"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(a.title) + '</div>' +
+      '<div style="font-size:11px;color:var(--gray)">' + fmtListTime(a.created_at) + '</div></div></div>';
+  }).join('') : '<div class="empty-note">まだアルバムはありません。<br>右上の＋から作れます ☺️</div>';
+}
+function openAlbumModal(){ $('album-title').value = ''; $('album-modal').classList.remove('hidden'); }
+function closeAlbumModal(){ $('album-modal').classList.add('hidden'); }
+async function submitAlbum(){
+  if (!curRoom) return;
+  var title = $('album-title').value.trim();
+  if (!title) { toast('アルバム名を入力してください'); return; }
+  var a = { id: uuid(), room_id: curRoom.id, title: title, cover_url: '', created_by: me.id };
+  var r = await sb.from('rtalk_albums').insert(a);
+  if (r.error) { if (!featureGuard(r.error)) toast('作成に失敗しました。。'); return; }
+  closeAlbumModal();
+  curAlbums.unshift(a);
+  toast('アルバムを作成しました ☺️');
+  openAlbum(a.id);
+}
+async function openAlbum(id){
+  curAlbum = curAlbums.filter(function(x){ return x.id === id; })[0];
+  if (!curAlbum) return;
+  show('view-photos');
+  $('photos-title').innerHTML = esc(curAlbum.title) + '<br><span class="sub">読み込み中です。。</span>';
+  $('photos-pane').innerHTML = '';
+  var r = await sb.from('rtalk_album_photos').select('*').eq('album_id', curAlbum.id).order('created_at', {ascending:false}).limit(500);
+  if (r.error) { featureGuard(r.error); $('photos-pane').innerHTML = '<div class="empty-note">読み込みに失敗しました。。</div>'; return; }
+  curPhotos = r.data || [];
+  renderPhotos();
+}
+function renderPhotos(){
+  $('photos-title').innerHTML = esc(curAlbum.title) + '<br><span class="sub">写真 ' + curPhotos.length + '枚</span>';
+  $('photos-pane').innerHTML = curPhotos.length ? '<div class="photo-grid">' + curPhotos.map(function(p){
+    var canDel = p.uploader_id === me.id || me.role === 'staff';
+    return '<div class="photo-cell"><img src="' + esc(p.url) + '" loading="lazy" onclick="viewImg(this.src)" alt="写真">' +
+      (canDel ? '<button class="photo-del" onclick="deletePhoto(\'' + p.id + '\')">✕</button>' : '') + '</div>';
+  }).join('') + '</div>' : '<div class="empty-note">写真がまだありません。<br>右上の＋から追加できます ☺️</div>';
+}
+function pickAlbumPhotos(){ $('album-photo-input').click(); }
+async function addAlbumPhotos(input){
+  var files = Array.prototype.slice.call(input.files || []);
+  input.value = '';
+  if (!files.length || !curAlbum) return;
+  if (files.length > 20) { toast('一度に追加できるのは20枚までです'); return; }
+  toast(files.length + '枚をアップロード中です。。');
+  var ok = 0;
+  for (var i = 0; i < files.length; i++) {
+    try {
+      var blob = await shrinkImage(files[i], 1280, 0.85);
+      var path = 'albums/' + curAlbum.id + '/' + uuid() + '.jpg';
+      var up = await sb.storage.from('rtalk-media').upload(path, blob, { contentType: 'image/jpeg' });
+      var url = '';
+      if (!up.error) url = sb.storage.from('rtalk-media').getPublicUrl(path).data.publicUrl;
+      else {
+        var small = await shrinkImage(files[i], 800, 0.7);
+        var d = await blobToDataUrl(small);
+        if (d.length <= 900000) url = d;
+      }
+      if (!url) continue;
+      var r = await sb.from('rtalk_album_photos').insert({ id: uuid(), album_id: curAlbum.id, url: url, uploader_id: me.id, uploader_name: me.name });
+      if (!r.error) ok++;
+      if (!curAlbum.cover_url) {
+        curAlbum.cover_url = url;
+        await sb.from('rtalk_albums').update({ cover_url: url }).eq('id', curAlbum.id);
+      }
+    } catch(e) { logErr('写真追加失敗: ' + (e.message || e)); }
+  }
+  toast(ok + '枚を追加しました ☺️');
+  openAlbum(curAlbum.id);
+}
+async function deletePhoto(id){
+  if (!confirm('この写真を削除しますか？')) return;
+  var r = await sb.from('rtalk_album_photos').delete().eq('id', id);
+  if (r.error) { toast('削除に失敗しました。。'); return; }
+  openAlbum(curAlbum.id);
+}
+
+/* ---------- ボイスメッセージ ---------- */
+function openVoice(){
+  if (!curRoom) return;
+  if (!navigator.mediaDevices || !window.MediaRecorder) { toast('この端末は録音に対応していません'); return; }
+  resetRecUI();
+  $('voice-modal').classList.remove('hidden');
+}
+function resetRecUI(){
+  stopRecTimer();
+  recBlob = null; recChunks = [];
+  $('voice-timer').textContent = '0:00';
+  $('voice-rec-btn').textContent = '録音をはじめる';
+  $('voice-preview').classList.add('hidden');
+  $('voice-actions').classList.add('hidden');
+  $('voice-controls').classList.remove('hidden');
+}
+function resetRec(){ resetRecUI(); }
+function stopStream(){
+  try { if (recStream) recStream.getTracks().forEach(function(t){ t.stop(); }); } catch(e){}
+  recStream = null;
+}
+function stopRecTimer(){ clearInterval(recTimer); recTimer = null; }
+function closeVoice(){
+  try { if (mediaRec && mediaRec.state !== 'inactive') mediaRec.stop(); } catch(e){}
+  stopStream();
+  stopRecTimer();
+  $('voice-modal').classList.add('hidden');
+}
+async function toggleRec(){
+  if (mediaRec && mediaRec.state === 'recording') { mediaRec.stop(); return; }
+  try {
+    recStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) { toast('マイクの使用が許可されませんでした'); return; }
+  recMime = '';
+  ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'].some(function(m2){
+    if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m2)) { recMime = m2; return true; }
+    return false;
+  });
+  recChunks = []; recBlob = null;
+  try { mediaRec = recMime ? new MediaRecorder(recStream, { mimeType: recMime }) : new MediaRecorder(recStream); }
+  catch(e) { mediaRec = new MediaRecorder(recStream); recMime = ''; }
+  mediaRec.ondataavailable = function(ev){ if (ev.data && ev.data.size) recChunks.push(ev.data); };
+  mediaRec.onstop = function(){
+    stopStream(); stopRecTimer();
+    recBlob = new Blob(recChunks, { type: recMime || (recChunks[0] && recChunks[0].type) || 'audio/webm' });
+    var pv = $('voice-preview');
+    pv.src = URL.createObjectURL(recBlob);
+    pv.classList.remove('hidden');
+    $('voice-actions').classList.remove('hidden');
+    $('voice-controls').classList.add('hidden');
+  };
+  mediaRec.start();
+  recStart = Date.now();
+  recTimer = setInterval(function(){
+    var s = Math.floor((Date.now() - recStart) / 1000);
+    $('voice-timer').textContent = Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+    if (s >= 180) { try { mediaRec.stop(); } catch(e){} toast('録音は3分までです'); }
+  }, 250);
+  $('voice-rec-btn').textContent = '⏹ 録音を止める';
+}
+async function sendVoice(){
+  if (!recBlob || !curRoom) return;
+  var isMp4 = /mp4/.test(recBlob.type);
+  var ext = isMp4 ? 'm4a' : 'webm';
+  var ctype = recBlob.type || (isMp4 ? 'audio/mp4' : 'audio/webm');
+  toast('送信中です。。');
+  try {
+    var path = 'voice/' + curRoom.id + '/' + uuid() + '.' + ext;
+    var up = await sb.storage.from('rtalk-media').upload(path, recBlob, { contentType: ctype });
+    if (up.error) throw up.error;
+    var url = sb.storage.from('rtalk-media').getPublicUrl(path).data.publicUrl;
+    closeVoice();
+    await insertMessage('voice', url);
+  } catch(e) {
+    logErr('ボイス送信失敗: ' + (e.message || e));
+    toast('送信に失敗しました。。もう一度お試しください');
+  }
+}
+
 /* ---------- 通知・タブバッジ ---------- */
 var TITLE_BASE = document.title;
 var unreadHidden = 0;
@@ -1102,8 +1670,8 @@ function enableNotif(){
 function maybeNotify(m){
   if (!me || m.sender_id === me.id) return;
   var relevant = me.role === 'staff'
-    ? m.sender_role === 'student'
-    : !!(myRoom && m.room_id === myRoom.id);
+    ? (m.sender_role === 'student' || !!myRoomIds[m.room_id])
+    : !!myRoomIds[m.room_id];
   if (!relevant) return;
   var viewing = document.visibilityState === 'visible' && curRoom && curRoom.id === m.room_id;
   if (me.role === 'student') { if (!viewing) unreadHidden++; updateTitleBadge(); }
@@ -1111,7 +1679,8 @@ function maybeNotify(m){
   if (window.Notification && Notification.permission === 'granted') {
     var body = m.kind === 'text' ? String(m.body).slice(0, 60)
       : m.kind === 'stamp' ? 'スタンプが届きました'
-      : m.kind === 'image' ? '画像が届きました' : '動画が届きました';
+      : m.kind === 'image' ? '画像が届きました'
+      : m.kind === 'voice' ? 'ボイスメッセージが届きました' : '動画が届きました';
     try {
       var n = new Notification(m.sender_name + (m.sender_role === 'staff' ? '（運営）' : 'さん'), { body: body, tag: m.room_id });
       n.onclick = function(){ try { window.focus(); this.close(); } catch(e){} };
@@ -1142,12 +1711,32 @@ function startRealtime(){
       .on('postgres_changes', { event: '*', schema: 'public', table: 'rtalk_rooms' }, function(payload){
         var r = payload.new;
         if (!r || !r.id) return;
+        var visible = r.type === 'group'
+          ? !!myGroupIds[r.id]
+          : (me.role === 'staff' || r.student_id === me.id);
+        if (!visible) return;
         var idx = -1;
         for (var i = 0; i < rooms.length; i++) if (rooms[i].id === r.id) { idx = i; break; }
-        if (idx >= 0) rooms[idx] = r; else rooms.push(r);
+        if (idx >= 0) rooms[idx] = r; else { rooms.push(r); if (r.type === 'group' || (me.role === 'student' && r.student_id === me.id)) myRoomIds[r.id] = true; }
         rooms.sort(function(a, b){ return new Date(b.last_msg_at || 0) - new Date(a.last_msg_at || 0); });
-        if (curRoom && curRoom.id === r.id) { curRoom = r; if (me.role === 'staff') renderHandledBar(); }
-        if (me.role === 'staff' && !$('view-inbox').classList.contains('hidden')) renderInbox();
+        if (curRoom && curRoom.id === r.id) { curRoom = r; if (me.role === 'staff' && r.type === 'student') renderHandledBar(); }
+        if (!$('view-inbox').classList.contains('hidden')) renderInbox();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'rtalk_room_members' }, function(payload){
+        var mm = payload.new;
+        if (!mm || mm.user_id !== me.id || myGroupIds[mm.room_id]) return;
+        myGroupIds[mm.room_id] = true;
+        myRoomIds[mm.room_id] = true;
+        sb.from('rtalk_rooms').select('*').eq('id', mm.room_id).limit(1).then(function(r){
+          if (r.error || !r.data || !r.data.length) return;
+          var g = r.data[0];
+          if (!rooms.some(function(x){ return x.id === g.id; })) {
+            rooms.push(g);
+            rooms.sort(function(a, b){ return new Date(b.last_msg_at || 0) - new Date(a.last_msg_at || 0); });
+          }
+          if (!$('view-inbox').classList.contains('hidden')) renderInbox();
+          toast('「' + g.name + '」グループに追加されました');
+        });
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'rtalk_reads' }, function(payload){
         var rr = payload.new;

@@ -83,6 +83,57 @@ CREATE TABLE IF NOT EXISTS rtalk_bug_reports (
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 7) グループのメンバー（グループトーク用）
+CREATE TABLE IF NOT EXISTS rtalk_room_members (
+  room_id     TEXT NOT NULL,
+  user_id     TEXT NOT NULL,
+  user_name   TEXT DEFAULT '',
+  user_role   TEXT DEFAULT '',
+  user_icon   TEXT DEFAULT '',
+  user_color  TEXT DEFAULT '',
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (room_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_rtalk_members_user ON rtalk_room_members (user_id);
+
+-- 8) ノート（ルームごとの掲示板）
+CREATE TABLE IF NOT EXISTS rtalk_notes (
+  id            TEXT PRIMARY KEY,
+  room_id       TEXT NOT NULL,
+  author_id     TEXT DEFAULT '',
+  author_name   TEXT DEFAULT '',
+  author_icon   TEXT DEFAULT '',
+  author_color  TEXT DEFAULT '',
+  title         TEXT DEFAULT '',
+  body          TEXT DEFAULT '',
+  image_url     TEXT DEFAULT '',
+  pinned        BOOLEAN DEFAULT FALSE,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_rtalk_notes_room ON rtalk_notes (room_id, created_at DESC);
+
+-- 9) アルバム
+CREATE TABLE IF NOT EXISTS rtalk_albums (
+  id            TEXT PRIMARY KEY,
+  room_id       TEXT NOT NULL,
+  title         TEXT DEFAULT '',
+  cover_url     TEXT DEFAULT '',
+  created_by    TEXT DEFAULT '',
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_rtalk_albums_room ON rtalk_albums (room_id);
+
+CREATE TABLE IF NOT EXISTS rtalk_album_photos (
+  id            TEXT PRIMARY KEY,
+  album_id      TEXT NOT NULL,
+  url           TEXT NOT NULL,
+  uploader_id   TEXT DEFAULT '',
+  uploader_name TEXT DEFAULT '',
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_rtalk_photos_album ON rtalk_album_photos (album_id, created_at DESC);
+
 -- 画像・動画の保存先バケット
 -- ※環境によっては storage への変更が権限エラーになるため、
 --   エラーが出ても他のテーブル作成が巻き戻らないように保護しています。
@@ -109,16 +160,20 @@ EXCEPTION WHEN OTHERS THEN
 END $$;
 
 -- リアルタイム同期（全員の画面に即反映）
-ALTER TABLE rtalk_users       REPLICA IDENTITY FULL;
-ALTER TABLE rtalk_rooms       REPLICA IDENTITY FULL;
-ALTER TABLE rtalk_messages    REPLICA IDENTITY FULL;
-ALTER TABLE rtalk_reads       REPLICA IDENTITY FULL;
-ALTER TABLE rtalk_broadcasts  REPLICA IDENTITY FULL;
-ALTER TABLE rtalk_bug_reports REPLICA IDENTITY FULL;
+ALTER TABLE rtalk_users        REPLICA IDENTITY FULL;
+ALTER TABLE rtalk_rooms        REPLICA IDENTITY FULL;
+ALTER TABLE rtalk_messages     REPLICA IDENTITY FULL;
+ALTER TABLE rtalk_reads        REPLICA IDENTITY FULL;
+ALTER TABLE rtalk_broadcasts   REPLICA IDENTITY FULL;
+ALTER TABLE rtalk_bug_reports  REPLICA IDENTITY FULL;
+ALTER TABLE rtalk_room_members REPLICA IDENTITY FULL;
+ALTER TABLE rtalk_notes        REPLICA IDENTITY FULL;
+ALTER TABLE rtalk_albums       REPLICA IDENTITY FULL;
+ALTER TABLE rtalk_album_photos REPLICA IDENTITY FULL;
 DO $$
 DECLARE t TEXT;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['rtalk_users','rtalk_rooms','rtalk_messages','rtalk_reads','rtalk_broadcasts','rtalk_bug_reports'] LOOP
+  FOREACH t IN ARRAY ARRAY['rtalk_users','rtalk_rooms','rtalk_messages','rtalk_reads','rtalk_broadcasts','rtalk_bug_reports','rtalk_room_members','rtalk_notes','rtalk_albums','rtalk_album_photos'] LOOP
     BEGIN
       IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname='supabase_realtime' AND tablename=t) THEN
         EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE %I', t);
@@ -137,17 +192,30 @@ ALTER TABLE rtalk_reads       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rtalk_broadcasts  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rtalk_bug_reports ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "rtalk_users_anon_all"       ON rtalk_users;
-DROP POLICY IF EXISTS "rtalk_rooms_anon_all"       ON rtalk_rooms;
-DROP POLICY IF EXISTS "rtalk_messages_anon_all"    ON rtalk_messages;
-DROP POLICY IF EXISTS "rtalk_reads_anon_all"       ON rtalk_reads;
-DROP POLICY IF EXISTS "rtalk_broadcasts_anon_all"  ON rtalk_broadcasts;
-DROP POLICY IF EXISTS "rtalk_bug_reports_anon_all" ON rtalk_bug_reports;
-CREATE POLICY "rtalk_users_anon_all"       ON rtalk_users       FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "rtalk_rooms_anon_all"       ON rtalk_rooms       FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "rtalk_messages_anon_all"    ON rtalk_messages    FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "rtalk_reads_anon_all"       ON rtalk_reads       FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "rtalk_broadcasts_anon_all"  ON rtalk_broadcasts  FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "rtalk_bug_reports_anon_all" ON rtalk_bug_reports FOR ALL USING (true) WITH CHECK (true);
+ALTER TABLE rtalk_room_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rtalk_notes        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rtalk_albums       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rtalk_album_photos ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "rtalk_users_anon_all"        ON rtalk_users;
+DROP POLICY IF EXISTS "rtalk_rooms_anon_all"        ON rtalk_rooms;
+DROP POLICY IF EXISTS "rtalk_messages_anon_all"     ON rtalk_messages;
+DROP POLICY IF EXISTS "rtalk_reads_anon_all"        ON rtalk_reads;
+DROP POLICY IF EXISTS "rtalk_broadcasts_anon_all"   ON rtalk_broadcasts;
+DROP POLICY IF EXISTS "rtalk_bug_reports_anon_all"  ON rtalk_bug_reports;
+DROP POLICY IF EXISTS "rtalk_members_anon_all"      ON rtalk_room_members;
+DROP POLICY IF EXISTS "rtalk_notes_anon_all"        ON rtalk_notes;
+DROP POLICY IF EXISTS "rtalk_albums_anon_all"       ON rtalk_albums;
+DROP POLICY IF EXISTS "rtalk_album_photos_anon_all" ON rtalk_album_photos;
+CREATE POLICY "rtalk_users_anon_all"        ON rtalk_users        FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "rtalk_rooms_anon_all"        ON rtalk_rooms        FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "rtalk_messages_anon_all"     ON rtalk_messages     FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "rtalk_reads_anon_all"        ON rtalk_reads        FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "rtalk_broadcasts_anon_all"   ON rtalk_broadcasts   FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "rtalk_bug_reports_anon_all"  ON rtalk_bug_reports  FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "rtalk_members_anon_all"      ON rtalk_room_members FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "rtalk_notes_anon_all"        ON rtalk_notes        FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "rtalk_albums_anon_all"       ON rtalk_albums       FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "rtalk_album_photos_anon_all" ON rtalk_album_photos FOR ALL USING (true) WITH CHECK (true);
 
 -- 「Success. No rows returned」でOK。
