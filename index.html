@@ -296,6 +296,7 @@
     <div class="topbar">
       <div class="avatar sm" id="inbox-my-avatar">🙂</div>
       <div class="title">Re:che トーク 運営<br><span class="sub" id="inbox-my-name"></span></div>
+      <button class="icon-btn hidden" id="notif-btn-inbox" onclick="enableNotif()" title="通知をオンにする">🔔</button>
       <button class="icon-btn" onclick="openBroadcast()" title="一斉配信">📣</button>
       <button class="icon-btn" onclick="openMenu()" title="メニュー">⋯</button>
     </div>
@@ -314,6 +315,7 @@
     <div class="topbar">
       <button class="icon-btn" id="talk-back" onclick="backFromTalk()">←</button>
       <div class="title" id="talk-title">トーク</div>
+      <button class="icon-btn hidden" id="notif-btn-talk" onclick="enableNotif()" title="通知をオンにする">🔔</button>
       <button class="icon-btn" onclick="openMenu()">⋯</button>
     </div>
     <div class="handled-bar hidden" id="handled-bar">
@@ -637,6 +639,7 @@ async function enterMain(){
     await loadInbox();
     show('view-inbox');
   }
+  refreshNotifBtns();
 }
 
 /* ---------- 受信箱（運営） ---------- */
@@ -664,6 +667,7 @@ function renderInbox(){
   var openBugs = bugs.filter(function(b){ return !b.resolved; }).length;
   var bc = $('bug-cnt'); bc.textContent = openBugs; bc.classList.toggle('hidden', openBugs === 0);
 
+  updateTitleBadge();
   var q = ($('inbox-search').value || '').trim();
   var list = rooms.slice();
   if (tab === 'need') list = list.filter(function(r){ return r.needs_reply; });
@@ -706,6 +710,7 @@ async function openTalk(room){
   $('handled-bar').classList.toggle('hidden', me.role !== 'staff');
   if (me.role === 'staff') renderHandledBar();
   show('view-talk');
+  refreshNotifBtns();
   $('msgs').innerHTML = '<div class="empty-note">読み込み中です。。</div>';
   try {
     var r = await sb.from('rtalk_messages').select('*').eq('room_id', room.id)
@@ -1069,6 +1074,58 @@ async function runDiag(){
   body.innerHTML = lines.join('');
 }
 
+/* ---------- 通知・タブバッジ ---------- */
+var TITLE_BASE = document.title;
+var unreadHidden = 0;
+function updateTitleBadge(){
+  var n = 0;
+  if (me && me.role === 'staff') n = rooms.filter(function(r){ return r.needs_reply; }).length;
+  else n = unreadHidden;
+  document.title = (n > 0 ? '（' + n + '）' : '') + TITLE_BASE;
+}
+function refreshNotifBtns(){
+  var show = !!(window.Notification && Notification.permission === 'default');
+  ['notif-btn-inbox', 'notif-btn-talk'].forEach(function(id){
+    var b = $(id); if (b) b.classList.toggle('hidden', !show);
+  });
+}
+function enableNotif(){
+  if (!window.Notification) {
+    toast('このブラウザは通知に対応していません（iPhoneはSafariの共有→ホーム画面に追加で使えます）');
+    return;
+  }
+  Notification.requestPermission().then(function(p){
+    refreshNotifBtns();
+    toast(p === 'granted' ? '通知をオンにしました 🔔' : '通知は許可されませんでした');
+  });
+}
+function maybeNotify(m){
+  if (!me || m.sender_id === me.id) return;
+  var relevant = me.role === 'staff'
+    ? m.sender_role === 'student'
+    : !!(myRoom && m.room_id === myRoom.id);
+  if (!relevant) return;
+  var viewing = document.visibilityState === 'visible' && curRoom && curRoom.id === m.room_id;
+  if (me.role === 'student') { if (!viewing) unreadHidden++; updateTitleBadge(); }
+  if (viewing) return;
+  if (window.Notification && Notification.permission === 'granted') {
+    var body = m.kind === 'text' ? String(m.body).slice(0, 60)
+      : m.kind === 'stamp' ? 'スタンプが届きました'
+      : m.kind === 'image' ? '画像が届きました' : '動画が届きました';
+    try {
+      var n = new Notification(m.sender_name + (m.sender_role === 'staff' ? '（運営）' : 'さん'), { body: body, tag: m.room_id });
+      n.onclick = function(){ try { window.focus(); this.close(); } catch(e){} };
+    } catch(e){ logErr('通知表示失敗: ' + (e.message || e)); }
+  }
+}
+document.addEventListener('visibilitychange', function(){
+  if (document.visibilityState === 'visible') {
+    unreadHidden = 0;
+    updateTitleBadge();
+    if (curRoom) markRead();
+  }
+});
+
 /* ---------- リアルタイム ---------- */
 function startRealtime(){
   if (channel) return;
@@ -1076,6 +1133,7 @@ function startRealtime(){
     channel = sb.channel('rtalk-live')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'rtalk_messages' }, function(payload){
         var m = payload.new;
+        maybeNotify(m);
         if (curRoom && m.room_id === curRoom.id) {
           if (!msgs.some(function(x){ return x.id === m.id; })) { msgs.push(m); renderMsgs(true); }
           markRead();
